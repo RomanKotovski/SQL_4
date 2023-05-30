@@ -15,7 +15,7 @@ def create_db(conn):
         CREATE TABLE IF NOT EXISTS phone(
             id SERIAL PRIMARY KEY,
             phone_number INTEGER NOT NULL,
-            client_id INTEGER NOT NULL REFERENCES client(id)
+            client_id INTEGER NOT NULL REFERENCES client(id) ON DELETE CASCADE
         );
         """)
 
@@ -37,19 +37,19 @@ def add_phone(conn, client_id, phone_number):
     print(cur.fetchone())
 
 
-def change_client(conn, id, firstname=None, lastname=None, email=None, phones=None):
+def change_client(conn, client_id, firstname=None, lastname=None, email=None, phones=None):
     arg_list = {'firstname': firstname, "lastname": lastname, 'email': email}
     for key, arg in arg_list.items():
         if arg:
-            conn.execute(SQL("UPDATE client SET {}=%s WHERE id=%s").format(Identifier(key)), (arg, id))
+            conn.execute(SQL("UPDATE client SET {}=%s WHERE id=%s").format(Identifier(key)), (arg, client_id))
     conn.execute("""
                 SELECT * FROM client
                 WHERE id=%s
-                """, id)
+                """, client_id)
     print(cur.fetchall())
 
 
-def delete_phone(conn, client_id=None, phone_number=None):
+def delete_phone(conn, client_id, phone_number):
     cur.execute("""
         DELETE FROM phone WHERE client_id=%s AND phone_number=%s;
     """, (client_id, phone_number))
@@ -58,13 +58,21 @@ def delete_phone(conn, client_id=None, phone_number=None):
            """)
     print(cur.fetchall())
 
-
 def delete_client(conn, client_id):
-    pass
+    cur.execute("""
+        DELETE FROM client WHERE id=%s;
+    """, (client_id,))
+    cur.execute("""
+            SELECT * FROM client;
+            """)
+    print(cur.fetchall())
 
-
-def find_client(conn, first_name=None, last_name=None, email=None, phone=None):
-    pass
+def find_client(conn, firstname=None, lastname=None, email=None, phone_number=None):
+    cur.execute("""
+        SELECT * FROM client c JOIN phone p ON c.id = p.client_id WHERE firstname=%s OR lastname=%s 
+        OR email=%s OR p.phone_number=%s;
+        """, (firstname, lastname, email, phone_number))
+    print(cur.fetchall())
 
 with psycopg2.connect(database="clients", user="postgres", password="956841") as conn:
     with conn.cursor() as cur:
@@ -73,17 +81,13 @@ with psycopg2.connect(database="clients", user="postgres", password="956841") as
         DROP TABLE phone cascade;
         """)
         create_db(cur)
-        add_client(cur, 'will', 'smith', 'agent_j@mail.ru')
+        add_client(cur, 'Will', 'Smith', 'agent_j@mail.ru')
+        add_client(cur, 'Tony', 'Stark', 'ironman@mail.ru')
         add_phone(cur, 1, 999216)
         add_phone(cur, 1, 216546)
-        # print(cur.fetchall())
-        # print(change_client(cur, '1', firstname='Tomas', email='a_tomas@mail.ru'))
-        delete_phone(cur, 1, 999216)
-        print(cur.fetchall())
-
-
-
-
+        add_phone(cur, 2, 9999999)
+        # change_client(cur, '1', firstname='Tomas', email='a_tomas@mail.ru')
+        find_client(cur, 'Tony')
 
 conn.close()
 
