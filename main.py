@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.sql import SQL, Identifier
 
 
 def create_db(conn):
@@ -36,12 +37,26 @@ def add_phone(conn, client_id, phone_number):
     print(cur.fetchone())
 
 
-def change_client(conn, client_id, firstname=None, lastname=None, email=None, phones=None):
-    pass
+def change_client(conn, id, firstname=None, lastname=None, email=None, phones=None):
+    arg_list = {'firstname': firstname, "lastname": lastname, 'email': email}
+    for key, arg in arg_list.items():
+        if arg:
+            conn.execute(SQL("UPDATE client SET {}=%s WHERE id=%s").format(Identifier(key)), (arg, id))
+    conn.execute("""
+                SELECT * FROM client
+                WHERE id=%s
+                """, id)
+    print(cur.fetchall())
 
 
-def delete_phone(conn, client_id, phone):
-    pass
+def delete_phone(conn, client_id=None, phone_number=None):
+    cur.execute("""
+        DELETE FROM phone WHERE client_id=%s AND phone_number=%s;
+    """, (client_id, phone_number))
+    cur.execute("""
+           SELECT * FROM phone;
+           """)
+    print(cur.fetchall())
 
 
 def delete_client(conn, client_id):
@@ -61,7 +76,13 @@ with psycopg2.connect(database="clients", user="postgres", password="956841") as
         add_client(cur, 'will', 'smith', 'agent_j@mail.ru')
         add_phone(cur, 1, 999216)
         add_phone(cur, 1, 216546)
+        # print(cur.fetchall())
+        # print(change_client(cur, '1', firstname='Tomas', email='a_tomas@mail.ru'))
+        delete_phone(cur, 1, 999216)
         print(cur.fetchall())
+
+
+
 
 
 conn.close()
