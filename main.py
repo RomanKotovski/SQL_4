@@ -46,7 +46,7 @@ def change_client(conn, client_id, firstname=None, lastname=None, email=None, ph
                 SELECT * FROM client
                 WHERE id=%s
                 """, client_id)
-    print(cur.fetchall())
+    print(cur.fetchone())
 
 
 def delete_phone(conn, client_id, phone_number):
@@ -76,18 +76,24 @@ def find_client(conn, firstname=None, lastname=None, email=None, phone_number=No
 
 with psycopg2.connect(database="clients", user="postgres", password="956841") as conn:
     with conn.cursor() as cur:
-        cur.execute("""
-        DROP TABLE client cascade;
-        DROP TABLE phone cascade;
-        """)
+        # cur.execute("""
+        # DROP TABLE client cascade;
+        # DROP TABLE phone cascade;
+        # """)
         create_db(cur)
-        add_client(cur, 'Will', 'Smith', 'agent_j@mail.ru')
-        add_client(cur, 'Tony', 'Stark', 'ironman@mail.ru')
-        add_phone(cur, 1, 999216)
-        add_phone(cur, 1, 216546)
-        add_phone(cur, 2, 9999999)
-        # change_client(cur, '1', firstname='Tomas', email='a_tomas@mail.ru')
-        find_client(cur, 'Tony')
+        add_client(cur, 'Peter', 'Parker', 'spiderman@gmail.com')
+        add_client(cur, 'Tony', 'Stark', 'ironman@gmail.com')
+        add_client(cur, 'Steve', 'Rogers', 'cap@gmail.com')
+        add_client(cur, 'Wade', 'Wilson', 'deadpool@gmail.com')
+        add_phone(cur, 1, 111111)
+        add_phone(cur, 1, 111222)
+        add_phone(cur, 2, 333333)
+        add_phone(cur, 3, 444444)
+        add_phone(cur, 4, 555555)
+        change_client(cur, '1', firstname='Miles', lastname='Morales')
+        delete_phone(cur, 1, 111222)
+        delete_client(cur, 2)
+        find_client(cur, email='deadpool@gmail.com')
 
 conn.close()
 
